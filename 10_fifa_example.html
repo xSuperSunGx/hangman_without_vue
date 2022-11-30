@@ -1,0 +1,147 @@
+<script src="https://unpkg.com/vue@3"></script>
+<script src="https://unpkg.com/vue-select@latest"></script>
+<link rel="stylesheet" href="https://unpkg.com/vue-select@latest/dist/vue-select.css">
+
+<html>
+<head>
+	<meta charset="utf-8">
+</head>
+<body>
+
+</body>
+<div id="app">
+	<img :src="'data/' + image + '.jpg'"/>
+	<p id="winner" hidden>{{winner}} <button id="reload" hidden @click="reload()"> Neu beginnen?</button></p>
+	<p>{{counter + ' Seconds'}}</p>
+	<p>{{'Highscore ' + highscore}}</p>
+	<p>{{niceformat}} <span v-if="cheat">-> {{random_word}}</span> </p>
+	<button v-for="letter in letters" @click="remove(letter)">{{letter}}</button>
+
+</div>
+</html>
+<style>
+	p {
+		font-size: 40px;
+		font-weight: bold;
+	}
+	#winner {
+		color: darkslateblue;
+	}
+</style>
+
+<script src="data/wordlist.js"></script>
+<script>
+	const { createApp } = Vue
+
+
+
+
+
+
+
+	createApp({
+		data() {
+			return {
+				list: list,
+				random_word: '',
+				displayed_word: '',
+				niceformat: '',
+				image: 0,
+				letters: [],
+				winner: '',
+				cheat: false,
+				counter : 0,
+				intervalCounter: 0,
+				highscore: 0,
+			}
+		},
+		methods:
+				{
+					revealSecret(char) {
+						let str = '';
+						for(let i = 0; i < this.random_word.length; i++) {
+							if(char === this.random_word.charAt(i)) {
+								str += this.random_word.charAt(i);
+							} else {
+								str += this.displayed_word.charAt(i);
+							}
+						}
+						this.displayed_word = str;
+						this.niceformat = this.getNiceFormat();
+					},
+					reload() {
+						document.location.reload();
+					}
+					,
+					remove(which) {
+						which = which.toLowerCase();
+						if (this.random_word.includes(which)) {
+							this.revealSecret(which);
+
+							if(!this.displayed_word.includes('_')) {
+								this.winner = 'You won!';
+								document.getElementById('reload').hidden = false;
+								document.getElementById('winner').hidden = false;
+							}
+						} else if(this.image !== 10) {
+							this.image++;
+							this.highscore++;
+						} else {
+							this.winner = 'You lost!';
+							document.getElementById('reload').hidden = false;
+							document.getElementById('winner').hidden = false;
+						}
+						if (this.letters.includes(which.toUpperCase().charAt(0))) {
+							this.letters.splice(this.letters.indexOf(which.toUpperCase().charAt(0)), 1);
+						}
+					},
+					getSecretWord() {
+						let str = "";
+
+						for(let i = 0; i < this.random_word.length; i++) {
+							str += "_";
+						}
+						return str;
+
+					},
+					getRandomArbitrary(min, max) {
+						return Math.random() * (max - min) + min;
+					},
+					getNiceFormat() {
+						let str = "";
+						for(let i = 0; i < this.displayed_word.length; i++) {
+							str += this.displayed_word.charAt(i) + " ";
+						}
+						return str.trim();
+					},
+					counterA() {
+						this.counter++;
+					}
+				}
+		,
+		mounted() {
+			this.random_word = this.list[Math.floor(this.getRandomArbitrary(0, this.list.length))];
+			console.log(this.random_word);
+			this.displayed_word = this.getSecretWord();
+			this.niceformat = this.getNiceFormat();
+			this.letters = Array.from(Array(26)).map((value, index) => String.fromCharCode(index + 65));
+			console.log(this.displayed_word);
+			console.log(this.niceformat);
+
+			document.addEventListener('keydown', (event) => {
+				const keyName = event.key;
+				if (keyName === 'Control') {
+					this.cheat = true;
+				}
+			});
+			document.addEventListener('keyup', (event) => {
+				const keyName = event.key;
+				if (keyName === 'Control') {
+					this.cheat = false;
+				}
+			});
+			setInterval(this.counterA, 1000);
+
+		}
+	}).mount('#app')
+</script>
